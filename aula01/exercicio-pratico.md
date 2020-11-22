@@ -3,7 +3,7 @@
 
 # Exercício prático - Aula 1
 
-Para esta aula, usaremos nossa querida, estimada e valorosa aplicação `simplecrud`. Sim, a mesma dos exercícios anteriores. É necessário também que você tenha acesso a um cluster do OpenShift na versão 4.5 Você pode usar a Katacoda para criar cluster que duram uma hora, usar os labs no site da Red Hat ou até mesmo seguir nosso [apêndice sobre como instalar o CRC](apendices/openshift_crc.md). Caso você possa investir num cluster para aprendizado, a licença do OpenShift é gratuita por 60 dias e você pode hospedá-lo na Azura, AWS, IBM Cloud ou na Red Hat, mas a infraestruturas e as máquinas onde o OpenShift será hospedado não são gratuitas, e os recursos necessários são vastos. Para mais detalhes, veja a [seção de teste do OpenShift](https://www.openshift.com/try).
+Para esta aula, usaremos nossa querida, estimada e valorosa aplicação `simplecrud`. Sim, a mesma dos exercícios anteriores. É necessário também que você tenha acesso a um cluster do OpenShift na versão 4.5 Você pode usar a Katacoda para criar cluster que duram uma hora, usar os labs no site da Red Hat ou até mesmo seguir nosso [apêndice sobre como instalar o CRC](../apendices/openshift_crc.md). Caso você possa investir num cluster para aprendizado, a licença do OpenShift é gratuita por 60 dias e você pode hospedá-lo na Azura, AWS, IBM Cloud ou na Red Hat, mas a infraestruturas e as máquinas onde o OpenShift será hospedado não são gratuitas, e os recursos necessários são vastos. Para mais detalhes, veja a [seção de teste do OpenShift](https://www.openshift.com/try).
 
 ## Requerimentos
 - Você deve ter acesso de desenvolvedor a um cluster do OpenShift
