@@ -177,6 +177,38 @@ Este passo é feito pela interface web do OpenShift. Acesse a console do OpenShi
 
 Ao término do carregamento da página, um círculo será exibido com a quantidade de pods em execução, sendo possível escalar de 0 a N. Ao aumentarmos, o OpenShift implanta novos clones da aplicação, o que aumenta a disponibilidade dela - e, consequentemente, o uso de recursos.
 
+## Usando a aplicação
+Aplicações criadas no OpenShift têm seu próprio serviço, que fornece acesso interno à aplicação. O nome do serviço é o mesmo da aplicação, e através dele é possível acessar qualquer pod da aplicação internamente batendo no load balancer interno, e não num pod ou num IP específico. Mas também é possível expor as aplicações numa rota para que ela seja acessível fora do cluster. É também possível acessar a linha de comando de um pod específico.
+
+```bash
+# Entrando num pod
+oc get pod
+NAME                   READY   STATUS      RESTARTS   AGE
+aplicacao-1-build     0/1     Completed   0          117m
+aplicacao-1-deploy    0/1     Completed   0          112m
+aplicacao-1-wtvwq     1/1     Running     0          112m
+
+oc rsh aplicacao-1-wtvwq
+sh-4.4$ 
+
+# Expondo um serviço
+oc expose svc aplicacao
+
+# Buscando a rota exposta
+oc get route
+NAME         HOST/PORT                                       PATH   SERVICES     PORT       TERMINATION   WILDCARD
+aplicacao    aplicacao-projeto.apps.cluster.com                     aplicacao    8080-tcp                 None
+
+# Testando a aplicação
+curl aplicacao-projeto.apps.cluster.com:8080/api
+"Eu existo!"
+```
+
+## Exercícios
+Isso conclui a aula de implantação de uma aplicação no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
+
+* [Exercício prático](exercicio-pratico.md)
+
 ## Referências
 * [Documentação do OpenShift](https://docs.openshift.com/)
 * [Trabalhando com projetos](https://docs.openshift.com/container-platform/4.5/applications/projects/working-with-projects.html)
