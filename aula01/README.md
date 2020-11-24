@@ -67,6 +67,34 @@ USER 1001
 ENTRYPOINT [ "sh", "/opt/entrypoint.sh" ]
 ```
 
+### Metadados
+O OpenShift usa labels das imagens como metadados para identifica-las no cluster. Além de simplesmente identificação, o OpenShift também usa alguns dos metadadados para funções importantes, como localização de arquivos (no caso de imagens S2I, que veremos ainda neste capítulo), e no caso de imagens de aplicação, usamos também para definir as portas usadas pela aplicação.
+
+```Dockerfile
+LABEL maintainer="Seu Nome <voce@dominio.com>" \
+  io.openshift.tags="php,laravel,mysql" \
+  io.k8s.description="Imagem com meu site" \
+  io.openshift.expose-services="http:http" \
+  openshift.io/display-name="Site PHP"
+```
+
+O exemplo acima implanta uma imagem no OpenShift com nome e descrição, e assim podemos encontra-la no cluster outras imagens, ou busca-la usando as tags definidas. Ao usarmos esta imagem, quando o fluxo de imagem dela é chamado e a imagem clonada, essas informações são exibidas no terminal. Ali também especificamos a porta que nossa aplicação precisa usar. Os labels usados podem ser específicos do OpenShift ou também labels reutilizados da engine do Kubernetes.
+
+<center>
+
+|Variável|Descrição|
+|---|---|
+|io.openshift.tags|Esta label contém as tags, separadas por vírgulas, que identificam e categorizam a imagem. Esta informação também é usada na UI ao listar imagens relevantes.|
+|io.openshift.wants|Uma lista de tags com requerimentos da imagem. A UI fornece sugestões caso imagens com estas tags ainda não existam. Por exemplo: sua imagem precisa de MySQL, mas você não tem um container de pé com esta tag. Com base nesses requerimentos, a UI sugere uma imagem de banco para ser usada.|
+|io.k8s.description|Fornece uma breve descrição do que a imagem faz e o que ela fornece. A UI usa esta informação junto com o nome da imagem para fornecer dados em linguagem humana para usuários.|
+|io.openshift.non-scalable|Esta variável fornece informações de escalonamento. A UI usa esses dados com os consumidores desta imagem. Não conter esta informação significa que o valor será definido como 1.|
+|io.openshift.min-memory|Memória mínima para que as imagens sejam executadas. Caso esta informação seja definida, a UI informa o usuário caso essa implantação ultrapasse o limite de recursos para o usuário.|
+|io.openshift.min-cpu|Unidades de processamento mínimas para que as imagens sejam executadas. Caso esta informação seja definida, a UI informa o usuário caso essa implantação ultrapasse o limite de recursos para o usuário.|
+|io.openshift.expose-services|Lista de portas que serão expostas pela imagem assim que o serviço da aplicação for criado, separado por vírgula.|
+|openshift.io/display-name|Nome da imagem usado pela UI para identificar a aplicação.|
+
+</center>
+
 ## Criando uma aplicação
 Com a imagem necessária já hospedada num repositório de imagens, podemos prosseguir com a criação da aplicação no OpenShift. A primeira coisa a se fazer é o login, obviamente. 
 
