@@ -235,6 +235,7 @@ curl aplicacao-projeto.apps.cluster.com:8080/api
 ## Exercícios
 Isso conclui a aula de implantação de uma aplicação no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
 
+* [Questionário](questionario.md)
 * [Exercício prático](exercicio-pratico.md)
 
 ## Referências
