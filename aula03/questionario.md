@@ -1,4 +1,4 @@
-<p align="center"><a href="aula03">Aula 3</a>
+<p align="center"><a href="../aula03">Aula 3</a>
 <br/>
 
 # Questionário - Aula 3
@@ -54,4 +54,4 @@
 </details>
 
 ---
-<p align="center"><a href="aula03">Aula 3</a>
+<p align="center"><a href="../aula03">Aula 3</a>
