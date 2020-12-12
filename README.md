@@ -5,8 +5,8 @@ Neste capítulo, vamos ver mais a fundo como alguns recursos do OpenShift funcio
 ## Implantando uma aplicação no OpenShift
 1. Aula prática: [Criando uma aplicação a partir de uma imagem](aula01)
 2. Aula prática: [Criando uma aplicação a partir de um Dockerfile](aula02)
-3. [Estratégia source-to-image (S2I)](aula03)
-4. Aula prática: [Criando uma aplicação com source-to-image (S2I)](aula04)
+3. Aula prática: [Criando uma aplicação com source-to-image (S2I)](aula03)
+4. Aula prática: [Modificando uma aplicação com source-to-image (S2I)](aula04)
 
 # Apêndices
 * [Instalação do OpenShift CLI](apendices/openshift_cli.md)
