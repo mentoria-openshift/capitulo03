@@ -1,10 +1,10 @@
 <p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula04">Próxima aula ❯</a></p>
 <br/>
 
-# Aula 3 - Criando uma aplicação com source-to-image (S2I)
+# Aula 3 - A estratégia Source-to-Image (S2I)
 Bem-vindo à terceira aula do curso prático de OpenShift. Neste capítulo falaremos um pouco sobre a estratégia Source-to-Image do OpenShift, que permite que aplicações sejam compiladas e implantadas diretamente do código fonte. Ao final da aula, faremos um exercício prático sobre como modificar uma imagem S2I existente. 
 
-## A estratégia Source-to-Image (S2I)
+## Funcionamento do S2I
 A estratégia S2I permite que aplicações sejam compiladas e implantadas diretamente do código fonte, a partir de um repositório git onde os arquivos estão hospedados. Ao final do processo, uma imagem é gerada contendo a aplicação compilada e pronta para ser executada. Conforme vimos anteriormente, o OpenShift permite uma sintaxe simples para o comando `oc new-app`, podendo ser fornecido apenas o URL do repositório Git, e uma verificação é feita para saber qual estratégia usar. Mas, apesar disso, esta lógica não é totalmente perfeita, então para prevenir erros, é ideal fornecer flags explícitos da estratégia utilizada. 
 
 Em ambos os casos, quando a estratégia selecionada é o S2I, o OpenShift faz uma outra verificação para determinar a linguagem utilizada caso ela não seja fornecida. Determinados arquivos e extensões contidas no seu código fonte indicam a linguagem específica na qual sua aplicação foi escrita, e o OpenShift usa esses arquivos para determinar qual imagem de compilação usar. Esta ferramenta é dependente de arquivos específicos. Aqui está uma lista dos formatos mais comuns usados no OpenShift, apesar de a lista completa suportada pela plataforma ser muito maior.
