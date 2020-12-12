@@ -2,7 +2,7 @@
 <br/>
 
 # Aula 3 - A estratégia Source-to-Image (S2I)
-Bem-vindo à terceira aula do curso prático de OpenShift. Neste capítulo falaremos um pouco sobre a estratégia Source-to-Image do OpenShift, que permite que aplicações sejam compiladas e implantadas diretamente do código fonte. Ao final da aula, faremos um exercício prático sobre como modificar uma imagem S2I existente. 
+Bem-vindo à terceira aula do curso prático de OpenShift. Neste capítulo falaremos um pouco sobre a estratégia Source-to-Image do OpenShift, que permite que aplicações sejam compiladas e implantadas diretamente do código fonte. 
 
 ## Funcionamento do S2I
 A estratégia S2I permite que aplicações sejam compiladas e implantadas diretamente do código fonte, a partir de um repositório git onde os arquivos estão hospedados. Ao final do processo, uma imagem é gerada contendo a aplicação compilada e pronta para ser executada. Conforme vimos anteriormente, o OpenShift permite uma sintaxe simples para o comando `oc new-app`, podendo ser fornecido apenas o URL do repositório Git, e uma verificação é feita para saber qual estratégia usar. Mas, apesar disso, esta lógica não é totalmente perfeita, então para prevenir erros, é ideal fornecer flags explícitos da estratégia utilizada. 
@@ -11,9 +11,9 @@ Em ambos os casos, quando a estratégia selecionada é o S2I, o OpenShift faz um
 
 <center>
 
-|Arquivo|Compilador|Linguagem|
+|Arquivo|Imagem de compilação|Linguagem|
 |---|---|---|
-|`pom.xml`|JDK|Java (com JBoss, por padrão)|
+|`pom.xml`|jee|Java (com JBoss)|
 |`package.json`|nodejs|Node.js|
 |`index.php`|php|PHP|
 |`index.html`|httpd|HTML|
@@ -177,12 +177,6 @@ mvn test -f /opt/java-app/pom.xml
 ```
 
 Jogando esse script na pasta definida, o OpenShift executará ele ao invés do script contido na imagem.
-
-## Exercícios
-Isso conclui a aula de conceitos de imagens S2I no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
-
-* [Questionário](questionario.md)
-* [Exercício prático](exercicio-pratico.md)
 
 ## Referências
 * [Documentação do OpenShift](https://docs.openshift.com/)
