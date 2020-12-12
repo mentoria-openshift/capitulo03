@@ -1,7 +1,7 @@
-<p align="center"><a href="../aula01">Aula 1</a>
+<p align="center"><a href="aula01">Aula 1</a>
 <br/>
 
-# Questionário - Aulas 1
+# Questionário - Aula 1
 
 1. Para que server as labels em imagens do OpenShift?
 
@@ -56,4 +56,4 @@
 </details>
 
 ---
-<p align="center"><a href="../aula01">Aula 1</a>
+<p align="center"><a href="aula01">Aula 1</a>

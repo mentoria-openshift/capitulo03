@@ -1,4 +1,4 @@
-<p align="center"><a href="../aula01">Aula 1</a></p>
+<p align="center"><a href="aula01">Aula 1</a></p>
 <br/>
 
 # Exercício prático - Aula 1
@@ -143,4 +143,4 @@ curl http://aula01-capitulo03.apps.cluster.com/api
 </details>
 
 ---
-<p align="center"><a href="../aula01">Aula 1</a></p>
+<p align="center"><a href="aula01">Aula 1</a></p>
