@@ -190,6 +190,37 @@ exec java -jar /opt/java-app/target/*.jar
 
 Ao commitarmos esta alteração para o repositório da imagem e criarmos uma aplicação S2I a partir do código fonte, o OpenShift executará esses dois scripts ao invés dos padrões. Com isso, a imagem S2I padrão do OpenShift, feita para JBoss, se torna compatível com aplicações maven simples e Spring Boot.
 
+## Compilações incrementais
+É comum utilizar ferramentas de CI/CD integradas com o OpenShift, como Jenkins, TravisCI ou até mesmo ferramentas de pipeline da AWS, Azure e IBM Cloud. Nessa técnica, a aplicação é compilada e implantada diversas vezes, cada passo executando diferentes comandos e sem nenhuma intervenção manual. 
+
+Como containers são de natureza imutável, esses passos podem ser difíceis, e a compilação da aplicação é dependente de determinadas bibliotecas. Usando o S2I, o desenvolvedor tem à sua disponsição mecanismos que permitem que essas dependências sejam reutilizadas nos diferentes passos, a fim de economizar tempo não baixando essas dependências novamente.
+
+O script `save-artifacts` é executado depois do `assemble` para que essas dependências sejam salvas num local compartilhado, e no passo seguinte o script `assemble` busca os arquivos na pasta usada para salvar. Dependências Maven, por exemplo, que são salvos na pasta `.m2`, podem ser copiadas para a área compartilhada, e posteriormente buscada pelo passo de `assemble` para serem reutilizadas.
+
+Exemplo do `save-artifacts`:
+
+```bash
+#!/bin/sh -e
+
+# Salvamento da pasta .m2 com os artefatos
+if [ -d ${HOME}/.m2 ]; then
+    pushd ${HOME} > /dev/null
+    tar cf - .m2
+    popd > /dev/null
+fi
+```
+
+Trecho do `assemble` para restaurar os arquivos:
+```bash
+# Restauração da pasta maven
+...
+if [ -d /tmp/artifacts/.m2 ]; then
+  echo "---> Restaurando artefatos Maven..."
+  mv /tmp/artifacts/.m2 ${HOME}/
+fi
+...
+```
+
 ## Exercícios
 Isso conclui a aula de modificação de imagens S2I no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
 
