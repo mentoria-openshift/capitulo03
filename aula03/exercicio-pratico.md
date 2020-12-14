@@ -1,7 +1,7 @@
-<p align="center"><a href="../aula03">Aula 3</a> | <a href="../aula04">Aula 4</a>
+<p align="center"><a href="../aula03">Aula 3</a></p>
 <br/>
 
-# Exercício prático - Aulas 3 e 4
+# Exercício prático - Aula 3
 
 Este exercício colocará em prática as coisas ensinadas na aula 3. Aqui você modificará uma imagem S2I e fará a implantação dela a partir de seu código fonte. Ao término desta aula, você será capaz de entender os conceitos do S2I e como modificar uma imagem. Na próxima aula, criaremos uma imagem do zero a partir da ferramenta do S2I.
 
@@ -9,9 +9,9 @@ Este exercício colocará em prática as coisas ensinadas na aula 3. Aqui você 
 - Você deve ter acesso de desenvolvedor a um cluster do OpenShift
 - Será necessário ter uma conta no GitHub
 - Seu projeto deverá se chamar capitulo03
-- Sua aplicação deverá se chamar aula04
+- Sua aplicação deverá se chamar aula03
 - Sua aplicação deverá ser criada com uma configuração de implantação
-- O código da aplicação deverá estar hospedada no GitHub (forkado do simplecrud do curso para sua conta)
+- O código da aplicação deverá estar hospedado no GitHub (forkado do simplecrud do curso para sua conta)
 - O objeto JSON para teste da aplicação estará disponível do endpoint `/api`
 - Use o fluxo de imagem S2I `openjdk-11-rhel8:1.0` para compilação da aplicação.
 - Os scripts originais não devem ser executados, e sim sobrepostos pelos customizados.
@@ -99,10 +99,10 @@ git push -u origin s2i-scripts
 
 # Criação dos recursos
 oc new-project capitulo03
-oc new-app --name aula04 openjdk-11-rhel8:1.0~https://github.com/seu_usuario/simplecrud-spring.git#s2i-scripts
+oc new-app --name aula03 openjdk-11-rhel8:1.0~https://github.com/seu_usuario/simplecrud-spring.git#s2i-scripts
 
 # Acompnhamento de compilação
-oc logs -f bc/aula04
+oc logs -f bc/aula03
 watch -n 1 oc get pod
 ```
 
@@ -112,14 +112,14 @@ watch -n 1 oc get pod
   <summary>4. Exponha o serviço após a implantação e teste a aplicação</summary>
   
 ```bash
-oc expose svc aula04
+oc expose svc aula03
 oc get route
 
-curl aula04-capitulo03.apps.cluster.com/api
+curl aula03-capitulo03.apps.cluster.com/api
 {"hostname":"simplecrud-1-f7zn2","Mensagem a todos":"Mas para onde vai o mundo?","Banco de dados":"H2","Perfil da aplicação":"default","OpenShift é muito":"maneiro","Mensagem":"Olá, Mundo!","Está aplicação está rodando em":"português"}
 ```
 
 </details>
 
 ---
-<p align="center"><a href="../aula03">Aula 3</a> | <a href="../aula04">Aula 4</a>
+<p align="center"><a href="../aula03">Aula 3</a></p>
