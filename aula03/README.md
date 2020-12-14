@@ -1,182 +1,231 @@
 <p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula04">Próxima aula ❯</a></p>
 <br/>
 
-# Aula 3 - A estratégia Source-to-Image (S2I)
-Bem-vindo à terceira aula do curso prático de OpenShift. Neste capítulo falaremos um pouco sobre a estratégia Source-to-Image do OpenShift, que permite que aplicações sejam compiladas e implantadas diretamente do código fonte. 
+# Aula 3 - Modificando uma imagem de compilação Source-to-Image (S2I)
+Nesta aula, usaremos os conceitos aprendidos na aula anterior para modificar uma imagem existente do Source-to-Image. Também exploraremos alguns comandos novos do OpenShift, para buscar itens e descreve-los, além de como criar uma aplicaçao usando o S2I.
 
-## Funcionamento do S2I
-A estratégia S2I permite que aplicações sejam compiladas e implantadas diretamente do código fonte, a partir de um repositório git onde os arquivos estão hospedados. Ao final do processo, uma imagem é gerada contendo a aplicação compilada e pronta para ser executada. Conforme vimos anteriormente, o OpenShift permite uma sintaxe simples para o comando `oc new-app`, podendo ser fornecido apenas o URL do repositório Git, e uma verificação é feita para saber qual estratégia usar. Mas, apesar disso, esta lógica não é totalmente perfeita, então para prevenir erros, é ideal fornecer flags explícitos da estratégia utilizada. 
+## Informações das imagens
+Os scripts são empacotados nas imagens S2I por padrão, e podemos sobrescreve-los usando scripts próprios contidos na nossa aplicação. Em alguns cenários isso é aplicável, pois uma imagem já existente no OpenShift pode já ter as dependências necessárias para que nossa aplicação seja compilada e executada, mas as instruções dos scripts não são exatamente ideiais. Portanto, podemos mudar a forma como a aplicação é entregue sem criar uma nova imagem S2I.
 
-Em ambos os casos, quando a estratégia selecionada é o S2I, o OpenShift faz uma outra verificação para determinar a linguagem utilizada caso ela não seja fornecida. Determinados arquivos e extensões contidas no seu código fonte indicam a linguagem específica na qual sua aplicação foi escrita, e o OpenShift usa esses arquivos para determinar qual imagem de compilação usar. Esta ferramenta é dependente de arquivos específicos. Aqui está uma lista dos formatos mais comuns usados no OpenShift, apesar de a lista completa suportada pela plataforma ser muito maior.
+Claro, dependendo da quantidade de customização necessária, talvez seja mais prudente criar uma nova imagem S2I do zero. Aprenderemos como fazer isso na próxima aula. Por ora, vamos alterar uma já existente.
 
-<center>
-
-|Arquivo|Imagem de compilação|Linguagem|
-|---|---|---|
-|`pom.xml`|jee|Java (com JBoss)|
-|`package.json`|nodejs|Node.js|
-|`index.php`|php|PHP|
-|`index.html`|httpd|HTML|
-
-</center>
-
-Esta detecção, no entanto, também não é perfeita. Diferentes versões de uma mesma linguagem usam a mesma estrutura e os mesmos arquivos, e isso pode confundir o OpenShift pelo fato de a busca ficar ambígua. Por exemplo, ter o arquivo `index.php` no seu projeto indica que ele deve ser compilado como PHP, mas não especifica a versão. O OpenShift pode subir a aplicação com o PHP 8.0 apesar de ela ter sido escrita com PHP 5.5, por exemplo. Para evitar esse tipo de ambiguidade, o ideal é ser explicito sobre qual imagem de compilação usar no seu projeto.
-
-O OCP fornece duas formas de criar uma aplicação S2I com uma versão específica de linguagem: uma notação simplificada e outra com flag de fluxo de imagem. A diferença entre as duas formas é que a primeira é específica para S2I, e usa o til (~) para separar imagem do repositório, enquanto a segunda opção é a mesma usada para implantar aplicações a partir de um fluxo de imagem, como padrão. O segundo formato simplesmente implanta uma imagem quando não existe um repositório fornecido, e quando um é fornecido o OCP entende que se trata de uma compilação S2I.
+O primeiro passo é buscar um fluxo de imagem já existente. Usamos os comandos `get` e `describe` para buscar informações de recursos no OpenShift, o que inclui fluxos de imagem. 
 
 ```bash
-# Criando uma aplicação com S2I sem especificar versões ou estratégias
-oc new-app --name minha_aplicacao --as-deployment-config https://github.com/seu_usuario/aplicacao_php.git
+# Buscando o fluxo de imagem do PHP
+oc get is -n openshift php
 
-# Criando uma aplicação S2I especificando versões (sem notação)
-oc new-app --name minha_aplicacao --as-deployment-config -i php:8 https://github.com/seu_usuario/aplicacao_php.git
-
-# Criando uma aplicação S2I especificando versões (com notação)
-oc new-app --name minha_aplicacao --as-deployment-config php:8~https://github.com/seu_usuario/aplicacao_php.git
+NAME   IMAGE REPOSITORY                                                                  TAGS             UPDATED
+php    default-route-openshift-image-registry.apps.na45.prod.nextcle.com/openshift/php   7.2,7.3,latest   3 months ago
 ```
 
-### O processo de compilação
-A estratégia S2I depende de scripts específicos para funcionar, cada um com uma função. Compilação da aplicação, execução de testes, execução da aplicação em si, manual, compilações incrementais. Enfim, é uma solução completa e avançada, que precisa de cuidados específicos. Alguns desses scripts são obrigatórios, enquanto outros não.
+Note o switch `-n`, tendo como parâmetro `openshift`. Isso indica o projeto, que em comandos CLI é tido como _namespace_, e por seu switch é `-n`, podendo também ser alongado para `--namespace`. Isso se dá pois o fluxo de imagem que vamos buscar está contido no projeto `openshift`, já existente por padrão no OCP. Caso o flag de namespace seja omitido, o OpenShift buscará pelo recurso solicitado dentro do projeto em uso. Portanto, caso você esteja no projeto A e precisa de um recurso de um outro projeto, deverá usar `oc get <recurso> -n <nome do projeto do recurso>`. Este flag não resume somente ao comando `get`, e existe para diversos outros comandos do OpenShift.
 
-<center>
-
-|Script|Obrigatório|Descrição
-|---|---|---|
-|`assemble`|sim|O script `assemble` compila a aplicação e a coloca no diretório apropriado dentro da imagem.|
-|`run`|sim|O script `run` executa a aplicação. É recomendado o uso do comando `exec` ao executar processos de container para assegurar desligamento gracioso dos processos iniciados.|
-|`save-artifacts`|não|Este script salva as dependências baixadas para que elas sejam usadas nos próximos passos de uma compilação incremental. Isso tira a necessidade de baixar novamente as dependências.|
-|`usage`|não|Uma documentação simples sobre como usar seu script e o que ele faz.|
-|`test/run`|não|Semelhante ao script `run`, mas colocado na pasta `test`. Serve para executar testes da sua aplicação para assegurar que tudo funciona.|
-
-</center>
-
-Quando uma compilação S2I é iniciada, um arquivo tar é criado contendo o código fonte da aplicação e os scripts S2I. O arquivo tar é, então, extraído, e seu conteúdo é colocado na pasta especificada na imagem S2I, na label `io.openshift.s2i.destination`. O caminho padrão é `/tmp`.
-
-No caso de ser uma compilação incremental, o script `assemble` é executado, e a aplicação é, então, compilada. O script `assemble`, ao terminar de compilar a imagem, coloca os arquivos binários da aplicação no diretório apropriado, e, no caso de ser uma compilação incremental, o script `save-artifacts` entra em cena e salva os artefatos apropriadamente, num arquivo tar, e o próximo passo da compilação é executado e os demais scripts chamados, até que esse processo de compilação finaliza, e o script `run` sobe a aplicação.
-
-### Criando uma imagem de compilação
-#### Definição da imagem
-Uma imagem de compilação é criada como qualquer outra: a partir de um Dockerfile. Mas temos que fornecer algumas informações específicas, como labels. Assim como com imagens comuns para o OpenShift, cada label tem sua função no S2I. No geral, as mesmas labels são usadas, mas com uma adição: `io.openshift.s2i.scripts-url`. 
-
-Esta label é imprescindível para imagens S2I, pois é ela que define onde os scripts de compilação e execução estarão localizados. Além de definir o camindo dos scripts, é necessário copiá-los para a pasta definida na label.
-
-```Dockerfile
-FROM registry.access.redhat.com/ubi8/ubi:8.0
-
-LABEL maintainer="Seu Nome <voce@email.com>" \
-    io.k8s.description="Uma imagem para compilação de aplicações Maven escritas com o OpenJDK 11" \
-    io.k8s.display-name="OpenJDK 11 S2I Builder" \
-    io.openshift.expose-services="8080:http" \
-    io.openshift.tags="java,openjdk,maven,s2i,builder,jdk,spring,vertx,vert.x,wildfly" \
-    io.openshift.s2i.scripts-url="/usr/libexec/s2i"
-
-ENV JAVA_HOME="/opt/openjdk11" \
-    MAVEN_HOME="/opt/maven" \
-    PATH="$PATH:/opt/maven/bin:/opt/openjdk11/bin"
-
-WORKDIR /opt
-RUN yum update -y && \
-    yum install -y wget curl tar && \
-    wget https://download.java.net/java/GA/jdk11/9/GPL/openjdk-11.0.2_linux-x64_bin.tar.gz && \
-    wget https://downloads.apache.org/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz && \
-    tar xvzf openjdk-11.0.2_linux-x64_bin.tar.gz && \
-    tar xvzf apache-maven-3.6.3-bin.tar.gz && \
-    mv apache-maven-3.6.3 /opt/maven && \
-    mv jdk-11.0.2 /opt/openjdk11 && \
-    mkdir /.m2 && \
-    chown -R 1001:0 /opt /.m2 && \
-    chmod -R g=u /opt /.m2
-
-COPY ./s2i/bin/ /usr/libexec/s2i
-
-USER 1001
-EXPOSE 8080
-CMD ["/usr/libexec/s2i/usage"]
-```
-#### Os scripts S2I
-Além de definir o Dockerfile, precisamos definir os scripts mencionados acima, trabalhando primariamente com os obrigatórios, que são `run` e `assemble`. 
+Tendo o nome do fluxo de imagem, podemos descrevê-lo para saber o que existe dentro dele. Para isso, usamos o comando `describe`. Isso mostra todas as informações do fluxo de imagem fornecido, como tags contidas, nome do fluxo de imagem, registro de cada imagem de cada tag, número de hash das imagens tagueadas. E, novamente, o comando `describe` não serve somente para fluxos de imagem: ele serve para qualquer recurso do OpenShift, e ao usá-lo, você terá como retorno as informações gerais do recurso solicitado.
 
 ```bash
-#!/bin/bash -e
+# Buscando informações
+oc describe is php -n openshift
+
+Name:			php
+Namespace:		openshift
+Created:		3 months ago
+Labels:			samples.operator.openshift.io/managed=true
+Annotations:		openshift.io/display-name=PHP
+			openshift.io/image.dockerRepositoryCheck=2020-08-21T04:11:16Z
+			samples.operator.openshift.io/version=4.5.6
+Image Repository:	default-route-openshift-image-registry.apps.na45.prod.nextcle.com/openshift/php
+Image Lookup:		local=false
+Unique Images:		2
+Tags:			3
+
+7.3 (latest)
+  tagged from registry.redhat.io/rhscl/php-73-rhel7:latest
+    prefer registry pullthrough when referencing this tag
+
+  Build and run PHP 7.3 applications on RHEL 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/sclorg/s2i-php-container/blob/master/7.3/README.md.
+  Tags: builder, php
+  Supports: php:7.3, php
+  Example Repo: https://github.com/sclorg/cakephp-ex.git
+
+  * registry.redhat.io/rhscl/php-73-rhel7@sha256:962d936b00f4953d977be9b85268a289bf2f9d49df4d51b408a7c7835a551103
+      3 months ago
+
+7.2
+  tagged from registry.redhat.io/rhscl/php-72-rhel7:latest
+    prefer registry pullthrough when referencing this tag
+
+  Build and run PHP 7.2 applications on RHEL 7. For more information about using this builder image, including OpenShift considerations, see https://github.com/sclorg/s2i-php-container/blob/master/7.2/README.md.
+  Tags: builder, php
+  Supports: php:7.2, php
+  Example Repo: https://github.com/sclorg/cakephp-ex.git
+
+  * registry.redhat.io/rhscl/php-72-rhel7@sha256:feb82582395558abc7823cff3800753aaa7bf976c5a4869bc921dd53e7eef447
+      3 months ago
+```
+
+Note o trecho que diz "tagged from" de cada tag contida neste fluxo de imagem. Este atributo mostra o registro da imagem, o nome dela e a tag da imagem original. Precisamos deste endereço para buscar a imagem.
+
+## Verificando os scripts originais
+Os scripts modificados normalmente serão baseados nos originais, então baixaremos a imagem e verificaremos o que existe lá dentro. Para desenvolvedores mais experientes, criar um script do zero sem se basear nos originais pode ser vatanjoso, entretanto. 
+
+Com o endereço da imagem original em mãos, podemos fazer um _pull_ dela. Vamos usar a versão 7.3 no exemplo.
+
+```
+podman pull registry.redhat.io/rhscl/php-73-rhel7:latest
+```
+
+Com a imagem em mãos, precisamos verificar o caminho dos scripts. Lembra-se da label mencionada na aula anterior? Ela é um pedaço chave neste trecho. O comando `inspect` do OpenShift foi baseado no mesmo comando do Docker e do Podman. Agora, usaremos o comando `inspect` para ver detalhes da nossa imagem, e buscar pela label especificamente.
+
+```
+podman inspect --format='{{ index .Config.Labels "io.openshift.s2i.scripts-url"}}' rhscl/php-73-rhel7
+
+image:///usr/libexec/s2i
+```
+
+Neste ponto, podemos prosseguir de três formas: 
+
+1. Criar um novo script assemble para nossa aplicação que chama o original. Ou seja, os passos do script original serão executados com adição de passos customizados. 
+2. Fazer o nosso script sem mencionar o original, e, desta forma, o original não é executado.
+3. Copiar o código do script original e colocá-lo no nosso. Assim as instruções do script original continuam sendo executados, mas sem chamá-lo.
+
+Para as opções 1 e 2 não precisaremos do código do script original, mas para a 3 sim. Nos dois primeiros casos, basta criar os scripts e colocá-los na pasta correta, e depois subi-los com o S2I. 
+
+Ao criarmos nossos scripts, eles deverão ser colocados na pasta `.s2i/bin`, na mesma pasta onde o arquivo de linguagem se encontra (seu `pom.xml`, `index.php` ou qualquer outro).
+
+### Criando como base no script original
+Para isso, precisaremos subir a imagem num container e imprimir o código do script. Vamos subir um container com a imagem.
+
+```bash
+podman run --name s2i-php-73 -it registry.redhat.io/rhscl/php-73-rhel7:latest bash
+```
+
+Isso subirá o container já com o bash aberto. Desta forma, uma vez que saímos do bash, o container morre. Vamos buscar o conteúdo dos scripts originais.
+
+```bash
+# Buscando o script de compilação
+bash-4.2$ cat /usr/libexec/s2i/assemble
+
+#!/bin/bash
+
+set -e
+
+source ${PHP_CONTAINER_SCRIPTS_PATH}/common.sh
+
+shopt -s dotglob
+echo "---> Installing application source..."
+rm -fR /tmp/src/.git
+mv /tmp/src/* ./
+
+# Fix source directory permissions
+fix-permissions ./
+fix-permissions ${HTTPD_CONFIGURATION_PATH}
+
+# Change the npm registry mirror if provided
+if [ -n "$NPM_MIRROR" ]; then
+        npm config set registry $NPM_MIRROR
+fi
+................................................
+```
+
+Para usar as mesmas instruções, temos que copiar todo o conteúdo desse script e colar no nosso. Mas, novamente, caso a intenção seja executar os scripts originais, a escolha mais prudente seria simplesmente chamá-los nos nossos scripts customizados.
+
+### Criando scripts novos
+Precisamos criar os diretórios e os scripts no caminho mencionado no tópico anterior. Como mencionado na aula anterior, as imagens OpenJDK padrão do OpenShift compilam aplicações com JBoss, o que a torna incompatível com aplicações que usem Spring Boot, por exemplo. Mas como as dependências são parecidas, e a imagem padrão tem OpenJDk e Maven instalados, podemos utiliza-la, apenas mudando a lógica de como a aplicação é compilada e servida. Vamos explorar o script original.
+
+```bash
+# Buscando o fluxo de imagem
+oc get is --namespace openshift java
+oc describe is --namespace openshift openjdk-11-rhel8
+...................
+tagged from registry.redhat.io/openjdk/openjdk-11-rhel8:1.0
+...................
+
+# Baixando a imagem
+podman pull registry.redhat.io/openjdk/openjdk-11-rhel8:1.0
+
+# Inspecionando a imagem
+podman inspect --format='{{ index .Config.Labels "io.openshift.s2i.scripts-url"}}' registry.redhat.io/openjdk/openjdk-11-rhel8:1.0
+
+image:///usr/local/s2i
+
+# Subindo container
+podman run --name s2i-jdk-11 -it registry.redhat.io/openjdk/openjdk-11-rhel8:1.0 bash
+
+# Buscando arquivos
+[jboss@28690d2dd508 ~]$ cat /usr/local/s2i/assemble
+[jboss@28690d2dd508 ~]$ cat /usr/local/s2i/run 
+```
+
+Examine o conteúdo dos scripts de compilação e de execução. Note que existem linhas específicas. Eles não servem para uma aplicação comum, que usa apenas maven e executa diretamente do jar compilado.
+
+Vamos criar um arquivo que faz uma compilação maven simples, sem execução de testes unitários. Esse será o valor do `assemble`.
+
+```bash
+#!/bin/bash
 
 # Caso o script seja executado com -h, instruções são exibidas
 if [[ "$1" == "-h" ]]; then
 	exec /usr/libexec/s2i/usage
 fi
 
-# Restaura dependências do maven para a pasta do .m2
-if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
-  echo "--> Restaurando artefatos de compilação..."
-  shopt -s dotglob
-  mv /tmp/maven-artifacts /.m2
-  shopt -u dotglob
-fi
-
 # Copia o código fonte para sua pasta
 echo "--> Instalando código fonte da aplicação..."
 cp -Rf /tmp/src/. /opt/java-app
-
-# Executa os testes
-echo "--> Executando testes unitários da aplicação..."
-mvn test -f /opt/java-app/pom.xml
 
 # Compila a aplicação
 echo "--> Compilando código fonte da aplicação..."
 mvn clean install -DskipTests -f /opt/java-app/pom.xml
 ```
 
-E o script de execução
+Conteúdo do `run`:
+
 ```bash
-#!/bin/bash -e
+#!/bin/bash
 
 # Inicia a execução da aplicação
-echo "--> Iniciando aplicação a partir de arquivo JAR"
+echo "--> Iniciando aplicação"
 exec java -jar /opt/java-app/target/*.jar
 ```
 
-Isso é o suficiente para que sua imagem fique pronta. Para subi-la para o OpenShift, é possível usar ambos dos métodos ensinados nas aulas anteriores: importando a imagem para o OpenShift ou até mesmo compilando o Dockerfile diretamente.
+Ao commitarmos esta alteração para o repositório da imagem e criarmos uma aplicação S2I a partir do código fonte, o OpenShift executará esses dois scripts ao invés dos padrões. Com isso, a imagem S2I padrão do OpenShift, feita para JBoss, se torna compatível com aplicações maven simples e Spring Boot.
 
-### Modificando scripts de uma imagem já existente
-Além de criar uma imagem do zero com o que precisamos, podemos reaproveitar uma imagem já existente. Alterando os scripts de execução e compilação, usaremos apenas as dependências da imagem original. Isso é feito criando os scripts modificados diretamente na sua aplicação, no diretório `.s2i/bin`, e ao buscar o código, o OpenShift verá os arquivos definidos e usará eles ao invés dos arquivos padrão da imagem.
+## Compilações incrementais
+É comum utilizar ferramentas de CI/CD integradas com o OpenShift, como Jenkins, TravisCI ou até mesmo ferramentas de pipeline da AWS, Azure e IBM Cloud. Nessa técnica, a aplicação é compilada e implantada diversas vezes, cada passo executando diferentes comandos e sem nenhuma intervenção manual. 
 
-Usando as definições acima, suponhamos que você já tenha aquela imagem compilada no seu OpenShift e precisa alterar o funcionamento para uma aplicação em específico. O goal `generate-sources` do Maven precisa ser executado após os goals de compilação e antes dos de testes unitários.
+Como containers são de natureza imutável, esses passos podem ser difíceis, e a compilação da aplicação é dependente de determinadas bibliotecas. Usando o S2I, o desenvolvedor tem à sua disponsição mecanismos que permitem que essas dependências sejam reutilizadas nos diferentes passos, a fim de economizar tempo não baixando essas dependências novamente.
 
-Será necessário criar, na raiz da aplicação, os diretórios `.s2i/bin`, e colocar o script `assemble` ali dentro. Um exemplo do script novo:
+O script `save-artifacts` é executado depois do `assemble` para que essas dependências sejam salvas num local compartilhado, e no passo seguinte o script `assemble` busca os arquivos na pasta usada para salvar. Dependências Maven, por exemplo, que são salvos na pasta `.m2`, podem ser copiadas para a área compartilhada, e posteriormente buscada pelo passo de `assemble` para serem reutilizadas.
+
+Exemplo do `save-artifacts`:
 
 ```bash
-#!/bin/bash -e
+#!/bin/sh -e
 
-# Caso o script seja executado com -h, instruções são exibidas
-if [[ "$1" == "-h" ]]; then
-	exec /usr/libexec/s2i/usage
+# Salvamento da pasta .m2 com os artefatos
+if [ -d ${HOME}/.m2 ]; then
+    pushd ${HOME} > /dev/null
+    tar cf - .m2
+    popd > /dev/null
 fi
-
-# Restaura dependências do maven para a pasta do .m2
-if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
-  echo "--> Restaurando artefatos de compilação..."
-  shopt -s dotglob
-  mv /tmp/maven-artifacts /.m2
-  shopt -u dotglob
-fi
-
-# Copia o código fonte para sua pasta
-echo "--> Instalando código fonte da aplicação..."
-cp -Rf /tmp/src/. /opt/java-app
-
-# Compila a aplicação
-echo "--> Compilando código fonte da aplicação..."
-mvn clean install -DskipTests -f /opt/java-app/pom.xml
-
-# Gera arquivos fonte
-echo "--> Gerando arquivos de código fonte..."
-mvn generate-sources -f /opt/java-app/pom.xml
-
-# Executa os testes
-echo "--> Executando testes unitários da aplicação..."
-mvn test -f /opt/java-app/pom.xml
 ```
 
-Jogando esse script na pasta definida, o OpenShift executará ele ao invés do script contido na imagem.
+Trecho do `assemble` para restaurar os arquivos:
+```bash
+# Restauração da pasta maven
+...
+if [ -d /tmp/artifacts/.m2 ]; then
+  echo "---> Restaurando artefatos Maven..."
+  mv /tmp/artifacts/.m2 ${HOME}/
+fi
+...
+```
+
+## Exercícios
+Isso conclui a aula de modificação de imagens S2I no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
+
+* [Questionário](questionario.md)
+* [Exercício prático](exercicio-pratico.md)
 
 ## Referências
 * [Documentação do OpenShift](https://docs.openshift.com/)
@@ -186,4 +235,4 @@ Jogando esse script na pasta definida, o OpenShift executará ele ao invés do s
 * [Criando imagens](https://docs.openshift.com/container-platform/4.5/openshift_images/create-images.html)
 
 ----
-<p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula04">Próxima aula ❯</a></p>
+<p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula03">Próxima aula ❯</a></p>
