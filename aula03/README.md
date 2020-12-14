@@ -1,8 +1,8 @@
 <p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula04">Próxima aula ❯</a></p>
 <br/>
 
-# Aula 3 - Modificando uma imagem de compilação Source-to-Image (S2I)
-Nesta aula, usaremos os conceitos aprendidos na aula anterior para modificar uma imagem existente do Source-to-Image. Também exploraremos alguns comandos novos do OpenShift, para buscar itens e descreve-los, além de como criar uma aplicaçao usando o S2I.
+# Aula 3 - Modificando uma imagem de compilação S2I
+Nesta aula, usaremos os conceitos aprendidos na aula anterior para modificar uma imagem existente do Source-to-Image. Também exploraremos alguns comandos novos do OpenShift, para buscar itens e descreve-los, além de como criar uma aplicação usando o S2I.
 
 ## Informações das imagens
 Os scripts são empacotados nas imagens S2I por padrão, e podemos sobrescreve-los usando scripts próprios contidos na nossa aplicação. Em alguns cenários isso é aplicável, pois uma imagem já existente no OpenShift pode já ter as dependências necessárias para que nossa aplicação seja compilada e executada, mas as instruções dos scripts não são exatamente ideiais. Portanto, podemos mudar a forma como a aplicação é entregue sem criar uma nova imagem S2I.
