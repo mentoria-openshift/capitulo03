@@ -232,6 +232,21 @@ curl aplicacao-projeto.apps.cluster.com:8080/api
 "Eu existo!"
 ```
 
+## Criando uma aplicação a partir de um Dockerfile
+O OpenShift também suporta a criação de uma aplicação diretamente de um Dockerfile, seguindo exatamente as mesmas regras e premissas de quando se cria através de uma imagem já hospedada. Monte o Dockerfile da mesma forma e o hospede em um repositório git. Os arquivos usados na compilação também devem estar no repositório. 
+
+Ao invés de subir a imagem para um registro e criar a aplicação usando o flag de fluxo de imagem, criaremos a aplicação usando a estratégia _Docker_. Basta seguir as instruções acima e criar a aplicação com o comando
+
+```bash
+oc new-app --name minha_aplicacao --as-deployment-config --strategy docker https://github.com/seu_usuario/aplicacao_dockerfile.git
+```
+
+O flag `#` (hashtag ou jogo-da-velha) informa a branch onde seu arquivo está. Isso é válido para qualquer estratégia que use um caminho Git como parâmetro. Também é possível usar o flag `--context-dir` para indicar uma pasta do repositório onde seus recursos se encontram. Por exemplo, ao criar uma aplicação usando um repositório Git como base, tendo o Dockerfile na pasta `minha_aplicacao`, que existe apenas na branch `release-production-1.0`, usamos o comando contendo estas flags. Elas também são válidas para compilações S2I, que também usam Git como origem do código. Lemrando do flag `--as-deployment-config`, introduzido na versão 4.5 do OCP. Sem ele, não será gerada uma configuração de implantação para sua aplicação, apesar de nas versões anteriores do OCP este ser o comportamento padrão. Portanto, para aumentar a possibilidade de customização, vamos usar esta flag.
+
+```
+oc new-app --name minha_aplicacao --as-deployment-config --strategy docker https://github.com/seu_usuario/aplicacao_dockerfile.git#release-production-1.0 --context-dir minha_aplicacao
+```
+
 ## Exercícios
 Isso conclui a aula de implantação de uma aplicação no OpenShift. Para praticar o conteúdo aprendido, vamos fazer um exercício prático.
 
