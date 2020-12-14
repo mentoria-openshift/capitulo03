@@ -235,4 +235,4 @@ Isso conclui a aula de modificação de imagens S2I no OpenShift. Para praticar 
 * [Criando imagens](https://docs.openshift.com/container-platform/4.5/openshift_images/create-images.html)
 
 ----
-<p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula03">Próxima aula ❯</a></p>
+<p align="center"><a href="../aula02">❮ Aula anterior</a> | <a href="../aula04">Próxima aula ❯</a></p>
